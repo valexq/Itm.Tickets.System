@@ -37,3 +37,4 @@ app.MapGet("/api/discounts/{code}", (string code) =>
 });
 //.RequireAuthorization(); // Protegemos este endpoint, solo usuarios autenticados pueden acceder
 app.Run();
+

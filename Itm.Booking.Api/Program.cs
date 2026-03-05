@@ -29,22 +29,32 @@ if (app.Environment.IsDevelopment())
 }
 
 
+
 app.MapPost("/api/bookings", async (BookingRequestDto request, IHttpClientFactory factory) =>
 {
+    EventDto? evento = null;
+    DiscountDto? descuento = null;
+    decimal precioFinal = 0;
+
     var eventClient = factory.CreateClient("EventClient");
     var discountClient = factory.CreateClient("DiscountClient");
 
-    // 1. LECTURA EN PARALELO (Clase 2)
-    var eventTask = eventClient.GetFromJsonAsync<EventDto>($"/api/events/{request.EventId}");
-    var discountTask = discountClient.GetFromJsonAsync<DiscountDto>($"/api/discounts/{request.DiscountCode}");
-
-    await Task.WhenAll(eventTask, discountTask);
-
-    var evento = await eventTask;
-    var descuento = await discountTask;
-
-    var total = evento!.PrecioBase * request.Tickets;
-    var precioFinal = total - (total * descuento!.Porcentaje);
+    try
+    {
+        // 1. LECTURA EN PARALELO (Clase 2)
+        var eventTask = eventClient.GetFromJsonAsync<EventDto>($"/api/events/{request.EventId}");
+        var discountTask = discountClient.GetFromJsonAsync<DiscountDto>($"/api/discounts/{request.DiscountCode}");
+        await Task.WhenAll(eventTask, discountTask);
+        evento = await eventTask;
+        descuento = await discountTask;
+        var total = evento!.PrecioBase * request.Tickets;
+        precioFinal = total - (total * descuento!.Porcentaje);
+    }
+    catch
+    {
+        return Results.BadRequest("El evento o el codigo de descuento no existe");
+    }
+    
 
     // ¿Qué pasa si el código de descuento no existe y da 404? Deben manejarlo.
     // (Pista: Pueden usar try/catch aquí o validar la respuesta).
@@ -65,7 +75,7 @@ app.MapPost("/api/bookings", async (BookingRequestDto request, IHttpClientFactor
     }
     catch (Exception ex)
     {
-    // 4. COMPENSACIÓN (Clase 4 - El Ctrl+Z)
+    // 4. COMPENSACIÓN 
     Console.WriteLine($"[SAGA] Error en pago: {ex.Message}. Liberando sillas...");
 
     await eventClient.PostAsJsonAsync("/api/events/release",
