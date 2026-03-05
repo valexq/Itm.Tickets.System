@@ -1,0 +1,6 @@
+@Itm.Events.Api_HostAddress = http://localhost:5216
+
+GET {{Itm.Events.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
