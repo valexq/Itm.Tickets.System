@@ -1,9 +1,35 @@
 using Itm.Discount.Api.Dtos;
-
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!);
+
+//2. Registramos la autenticación JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =>
+  {
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+          ValidateIssuer = true,
+          ValidIssuer = jwtSettings["Issuer"],
+          ValidateAudience = true,
+          ValidAudience = jwtSettings["Audience"],
+          ValidateLifetime = true, // Valida que el token no haya expirado
+          ValidateIssuerSigningKey = true, // Valida la firma del token
+          IssuerSigningKey = new SymmetricSecurityKey(secretKey) // Clave secreta para validar la firma
+      };
+  });
+
+
+//3. Agregamos autorización para proteger los endpoints
+builder.Services.AddAuthorization();
+
 
 // --- 1. ZONA DE SERVICIOS 
 // Aquí le decimos a .NET qué capacidades tendrá nuestra API.

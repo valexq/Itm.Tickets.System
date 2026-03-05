@@ -10,28 +10,28 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer(); // Permite que Swagger analice los endpoints
 builder.Services.AddSwaggerGen();           // Genera la documentación visual
 
-//var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-//var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!);
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!);
 
 //2. Registramos la autenticación JWT
-//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//    .AddJwtBearer(options =>
-  //  {
-    //    options.TokenValidationParameters = new TokenValidationParameters
-      //  {
-        //    ValidateIssuer = true,
-          //  ValidIssuer = jwtSettings["Issuer"],
-            //ValidateAudience = true,
-            //ValidAudience = jwtSettings["Audience"],
-            //ValidateLifetime = true, // Valida que el token no haya expirado
-            //ValidateIssuerSigningKey = true, // Valida la firma del token
-            //IssuerSigningKey = new SymmetricSecurityKey(secretKey) // Clave secreta para validar la firma
-       // };
-    //});
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+            ValidateLifetime = true, // Valida que el token no haya expirado
+            ValidateIssuerSigningKey = true, // Valida la firma del token
+            IssuerSigningKey = new SymmetricSecurityKey(secretKey) // Clave secreta para validar la firma
+        };
+    });
 
 
-//3. Agregamos autorización (Opcional, pero recomendado para proteger los endpoints)
-//builder.Services.AddAuthorization();
+//3. Agregamos autorización para proteger los endpoints
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -46,8 +46,8 @@ if (app.Environment.IsDevelopment())
 
 // Middleware de seguridad (JWT)
 
-//app.UseAuthentication(); // Verifica el token JWT en cada petición
-//app.UseAuthorization();    // Verifica los permisos del usuario
+app.UseAuthentication(); // Verifica el token JWT en cada petición
+app.UseAuthorization();    // Verifica los permisos del usuario
 
 var EventDb = new List<EventDto>
 {
